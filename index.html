@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Simplefly — Mi viaje</title>
+<link href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@400;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--n:#0D1F75;--b:#3A46A0;--pk:#FFB4B4;--pd:#FF7D87;--bg:#F5F6FA;--cd:#fff;--br:rgba(13,31,117,0.12);--mu:#6B7BAE;}
+body{font-family:'Raleway',sans-serif;background:var(--bg);max-width:420px;margin:0 auto;min-height:100vh;}
+#login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0D1F75 0%,#3A46A0 60%,#FFB4B4 100%);padding:24px;}
+.login-card{background:#fff;border-radius:24px;padding:2rem;width:100%;max-width:360px;}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.login-iso{width:48px;height:48px;border-radius:14px;background:var(--pk);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.login-iso img{width:42px;height:30px;object-fit:contain;}
+.login-brand{font-family:'Parkinsans',sans-serif;font-size:24px;font-weight:700;color:var(--n);}
+.login-tagline{font-size:12px;color:var(--mu);margin-bottom:1.8rem;}
+.login-label{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px;}
+.login-input{width:100%;padding:13px 16px;font-size:16px;font-family:'Raleway',sans-serif;border-radius:14px;border:1.5px solid var(--br);background:var(--bg);color:var(--n);outline:none;margin-bottom:14px;}
+.login-input:focus{border-color:var(--b);}
+.login-btn{width:100%;padding:14px;font-size:15px;font-family:'Parkinsans',sans-serif;font-weight:700;border-radius:14px;border:none;background:var(--n);color:#fff;cursor:pointer;}
+.login-btn:hover{background:var(--b);}
+.login-err{display:none;background:#FFE8E8;color:#A00D1F;font-size:12px;padding:10px 14px;border-radius:12px;margin-top:10px;text-align:center;}
+.login-hint{font-size:11px;color:rgba(255,255,255,.7);margin-top:20px;text-align:center;}
+#app-screen{display:none;flex-direction:column;min-height:100vh;background:var(--bg);}
+.app-header{background:var(--n);padding:14px 18px 12px;display:flex;align-items:center;gap:10px;}
+.app-iso{width:32px;height:32px;border-radius:9px;background:var(--pk);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.app-iso img{width:28px;height:20px;object-fit:contain;}
+.app-brand{font-family:'Parkinsans',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.app-saludo{margin-left:auto;font-size:11px;color:rgba(255,255,255,.7);}
+.app-saludo strong{color:#fff;}
+.content{flex:1;overflow-y:auto;padding-bottom:72px;}
+.banner{background:var(--n);margin:14px;border-radius:18px;padding:16px;position:relative;overflow:hidden;}
+.banner::after{content:'';position:absolute;right:-15px;top:-15px;width:80px;height:80px;border-radius:50%;background:rgba(255,180,180,.1);}
+.banner-dest{font-family:'Parkinsans',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:3px;}
+.banner-fechas{font-size:11px;color:rgba(255,255,255,.55);}
+.banner-pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 11px;border-radius:20px;margin-top:8px;}
+.pill-activo{background:var(--pk);color:var(--n);}
+.pill-proximo{background:rgba(255,255,255,.2);color:#fff;}
+.pill-finalizado{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);}
+.prog-card{background:var(--cd);border-radius:16px;margin:0 14px 12px;padding:14px;border:1px solid var(--br);}
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.prog-label{font-size:11px;color:var(--mu);font-weight:600;}
+.prog-pct{font-family:'Parkinsans',sans-serif;font-size:15px;font-weight:700;color:var(--n);}
+.prog-track{height:6px;background:rgba(13,31,117,.07);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--n),var(--pd));border-radius:3px;transition:width .5s;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.stat-box{background:var(--bg);border-radius:10px;padding:8px;text-align:center;}
+.stat-num{font-family:'Parkinsans',sans-serif;font-size:20px;font-weight:700;color:var(--n);}
+.stat-lbl{font-size:9px;color:var(--mu);}
+.checkin-alert{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:14px;margin:0 14px 12px;padding:12px 14px;display:none;align-items:center;gap:10px;}
+.checkin-ic{font-size:20px;}
+.checkin-info{flex:1;}
+.checkin-titulo{font-size:12px;font-weight:700;color:#1B5E20;}
+.checkin-texto{font-size:11px;color:#2E7D32;}
+.checkin-btn{background:#1B5E20;color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:10px;text-decoration:none;white-space:nowrap;font-family:'Parkinsans',sans-serif;}
+.hoy-card{background:var(--cd);border-radius:16px;margin:0 14px 12px;padding:14px;border:1px solid var(--br);}
+.hoy-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.hoy-card-title{font-family:'Parkinsans',sans-serif;font-size:13px;font-weight:700;color:var(--pd);}
+.hoy-fecha{font-size:10px;color:var(--mu);}
+.hoy-titulo{font-family:'Parkinsans',sans-serif;font-size:14px;font-weight:700;color:var(--n);margin-bottom:4px;}
+.hoy-desc{font-size:11px;color:var(--mu);line-height:1.5;margin-bottom:10px;}
+.hoy-item{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:11px;padding:9px 11px;margin-bottom:6px;}
+.hoy-ic{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.hoy-info{flex:1;}
+.hoy-nm{font-size:12px;font-weight:600;color:var(--n);}
+.hoy-sub{font-size:10px;color:var(--mu);}
+.hoy-vacio{font-size:12px;color:var(--mu);padding:4px 0;}
+.tip-agente{background:linear-gradient(135deg,var(--n),var(--b));border-radius:14px;margin:0 14px 12px;padding:13px 15px;display:none;}
+.tip-label{font-size:9px;font-weight:700;color:var(--pk);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.tip-texto{font-size:12px;color:rgba(255,255,255,.85);line-height:1.5;}
+.itin-card{background:var(--cd);border-radius:16px;margin:0 14px 10px;padding:14px;border:1px solid var(--br);}
+.itin-card.past{opacity:.6;}
+.itin-card.today{border-color:var(--pd);border-width:2px;}
+.itin-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.itin-num{width:38px;height:38px;border-radius:11px;background:var(--n);display:flex;align-items:center;justify-content:center;font-family:'Parkinsans',sans-serif;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;}
+.itin-num.past{background:var(--mu);}
+.itin-num.today-num{background:var(--pd);}
+.itin-hinfo{flex:1;}
+.itin-htit{font-family:'Parkinsans',sans-serif;font-size:13px;font-weight:700;color:var(--n);}
+.itin-fecha{font-size:10px;color:var(--mu);margin-top:2px;}
+.itin-desc{font-size:11px;color:var(--mu);line-height:1.5;margin-bottom:8px;}
+.itin-acts{margin-bottom:6px;}
+.itin-act{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mu);margin-bottom:4px;}
+.act-ic{font-size:13px;flex-shrink:0;}
+.act-nm{color:var(--n);font-weight:500;}
+.itin-hotel{font-size:11px;color:var(--mu);margin-bottom:5px;}
+.itin-tip{background:rgba(13,31,117,.05);border-radius:9px;padding:8px 10px;font-size:11px;color:var(--mu);display:flex;align-items:flex-start;gap:6px;line-height:1.5;}
+.tip-ic{font-size:13px;flex-shrink:0;}
+.docs-section-title{font-family:'Parkinsans',sans-serif;font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;padding:14px 14px 6px;}
+.doc-card{background:var(--cd);border-radius:16px;margin:0 14px 10px;padding:14px;border:1px solid var(--br);}
+.doc-card-title{font-family:'Parkinsans',sans-serif;font-size:13px;font-weight:700;color:var(--n);margin-bottom:8px;}
+.doc-card-info{margin-bottom:8px;}
+.doc-card-item{font-size:11px;color:var(--mu);margin-bottom:3px;}
+.doc-link{display:inline-block;background:var(--n);color:#fff;font-size:11px;font-weight:700;padding:7px 14px;border-radius:10px;text-decoration:none;font-family:'Parkinsans',sans-serif;}
+.add-doc-btn{background:var(--cd);border:1.5px dashed rgba(13,31,117,.2);border-radius:14px;margin:0 14px 10px;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--b);font-family:'Raleway',sans-serif;}
+.add-doc-btn span{font-size:20px;color:var(--n);}
+.add-doc-btn:hover{border-color:var(--n);color:var(--n);}
+.my-doc-row{background:var(--cd);border-radius:14px;margin:0 14px 8px;padding:12px 14px;border:1px solid var(--br);display:flex;align-items:center;gap:10px;}
+.my-doc-ic{font-size:22px;flex-shrink:0;}
+.my-doc-info{flex:1;min-width:0;}
+.my-doc-nm{font-size:12px;font-weight:600;color:var(--n);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.my-doc-fecha{font-size:10px;color:var(--mu);}
+.my-doc-actions{display:flex;gap:6px;flex-shrink:0;}
+.my-doc-btn{background:var(--n);color:#fff;font-size:11px;font-weight:700;padding:5px 11px;border-radius:9px;text-decoration:none;font-family:'Parkinsans',sans-serif;}
+.my-doc-del{background:#FFE8E8;color:#A00D1F;border:none;font-size:13px;width:28px;height:28px;border-radius:9px;cursor:pointer;}
+.vacio{text-align:center;padding:40px 20px;color:var(--mu);}
+.vacio p{font-size:13px;}
+.vacio-mini{font-size:11px;color:var(--mu);padding:8px 14px 4px;}
+.page-header{padding:16px 14px 4px;}
+.page-title{font-family:'Parkinsans',sans-serif;font-size:17px;font-weight:700;color:var(--n);}
+.page-sub{font-size:11px;color:var(--mu);margin-top:2px;}
+.navbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:var(--cd);border-top:1px solid var(--br);display:flex;z-index:50;}
+.nav-btn{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;font-size:9px;font-family:'Raleway',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--mu);}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;}
+.nav-btn.on{color:var(--n);}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-iso"><img id="iso-login" alt="Simplefly"/></div>
+      <span class="login-brand">Simplefly</span>
+    </div>
+    <div class="login-tagline">Vola acompanado</div>
+    <label class="login-label">Tu nombre o destino del viaje</label>
+    <input class="login-input" id="login-code" placeholder="Ej: Maria o Europa"/>
+    <button class="login-btn" id="login-btn">Ingresar a mi viaje</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+  <div class="login-hint">Ingresa tu nombre o el destino de tu viaje</div>
+</div>
+
+<div id="app-screen">
+  <div class="app-header">
+    <div class="app-iso"><img id="iso-app" alt=""/></div>
+    <span class="app-brand">Simplefly</span>
+    <div class="app-saludo" id="home-saludo">Bienvenido!</div>
+  </div>
+  <div class="content">
+
+    <div id="page-inicio" style="display:block">
+      <div class="banner">
+        <div class="banner-dest" id="banner-dest">Mi viaje</div>
+        <div class="banner-fechas" id="banner-fechas"></div>
+        <span class="banner-pill pill-activo" id="banner-pill">En curso</span>
+      </div>
+      <div class="prog-card">
+        <div class="prog-row">
+          <span class="prog-label" id="prog-label">Cargando...</span>
+          <span class="prog-pct" id="prog-pct">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="prog-bar" style="width:0%"></div></div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-num" id="stat-vuelos">-</div><div class="stat-lbl">Vuelos</div></div>
+          <div class="stat-box"><div class="stat-num" id="stat-hoteles">-</div><div class="stat-lbl">Hoteles</div></div>
+          <div class="stat-box"><div class="stat-num" id="stat-acts">-</div><div class="stat-lbl">Actividades</div></div>
+        </div>
+      </div>
+      <div class="checkin-alert" id="checkin-alert">
+        <div class="checkin-ic">✈</div>
+        <div class="checkin-info">
+          <div class="checkin-titulo">Check-in disponible!</div>
+          <div class="checkin-texto" id="checkin-texto"></div>
+        </div>
+        <a class="checkin-btn" id="checkin-link" href="#" target="_blank">Check-in</a>
+      </div>
+      <div class="hoy-card">
+        <div class="hoy-card-header">
+          <span class="hoy-card-title">Hoy</span>
+          <span class="hoy-fecha" id="hoy-fecha"></span>
+        </div>
+        <div id="hoy-cont"></div>
+      </div>
+      <div class="tip-agente" id="tip-agente">
+        <div class="tip-label">Tip de tu agente</div>
+        <div class="tip-texto" id="tip-texto"></div>
+      </div>
+    </div>
+
+    <div id="page-itinerario" style="display:none">
+      <div class="page-header">
+        <div class="page-title">Itinerario</div>
+        <div class="page-sub" id="itin-sub">Todos los dias de tu viaje</div>
+      </div>
+      <div id="itin-cont" style="padding-top:10px"></div>
+    </div>
+
+    <div id="page-docs" style="display:none">
+      <div class="page-header">
+        <div class="page-title">Documentos</div>
+        <div class="page-sub">Vuelos, hoteles y tus archivos</div>
+      </div>
+      <div id="docs-cont" style="padding-top:6px"></div>
+    </div>
+
+  </div>
+  <div class="navbar">
+    <button class="nav-btn on" id="tab-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Inicio
+    </button>
+    <button class="nav-btn" id="tab-itinerario">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Itinerario
+    </button>
+    <button class="nav-btn" id="tab-docs">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Documentos
+    </button>
+  </div>
+</div>
+
+<script>
+document.getElementById('iso-login').src='data:image/png;base64,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';
+document.getElementById('iso-app').src='data:image/png;base64,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';
+</script>
+<script>
+var SBURL = 'https://vzgcogivfnlzciwwscls.supabase.co';
+var SBKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6Z2NvZ2l2Zm5semNpd3dzY2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODYwMTAsImV4cCI6MjA4OTI2MjAxMH0.tPqXzg44_xG6uogi8lmRIWLfLUB21pSokivL6XIL9_M';
+var sb = null;
+try { sb = window.supabase.createClient(SBURL, SBKEY); } catch(e) { console.warn(e); }
+
+var viaje = null;
+var vuelos = [], hoteles = [], actividades = [], itinerario = [];
+var misDocumentos = [];
+
+function g(id) { return document.getElementById(id); }
+function ce(tag, cls, txt) { var e = document.createElement(tag); if(cls) e.className = cls; if(txt !== undefined) e.textContent = txt; return e; }
+
+function parseDate(d) {
+  if(!d) return null;
+  if(d.includes('T')) return new Date(d);
+  return new Date(d + 'T00:00:00');
+}
+
+function fd(d) {
+  var dt = parseDate(d);
+  if(!dt) return '-';
+  return dt.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function fdCorta(d) {
+  var dt = parseDate(d);
+  if(!dt) return '-';
+  return dt.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+}
+
+function fdLarga(dt) {
+  if(!dt) return '-';
+  return dt.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function stripTime(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+
+function getProgress() {
+  if(!viaje) return {pct:0, dayNum:1, total:1, diaActual:new Date()};
+  var hoy = stripTime(new Date());
+  var inicio = stripTime(parseDate(viaje.fecha_inicio));
+  var fin = stripTime(parseDate(viaje.fecha_fin));
+  var total = Math.max(1, Math.round((fin - inicio) / 86400000) + 1);
+  var transcurridos = Math.round((hoy - inicio) / 86400000);
+  var dayNum = Math.max(1, Math.min(total, transcurridos + 1));
+  var pct = Math.round((transcurridos / total) * 100);
+  pct = Math.max(0, Math.min(100, pct));
+  var diaActual = new Date(inicio);
+  diaActual.setDate(diaActual.getDate() + Math.max(0, transcurridos));
+  return {pct:pct, dayNum:dayNum, total:total, diaActual:diaActual};
+}
+
+function getStatusViaje() {
+  if(!viaje) return {label:'Sin viaje', cls:'proximo'};
+  var hoy = stripTime(new Date());
+  var inicio = stripTime(parseDate(viaje.fecha_inicio));
+  var fin = stripTime(parseDate(viaje.fecha_fin));
+  if(hoy < inicio) return {label:'Proximo', cls:'proximo'};
+  if(hoy > fin) return {label:'Finalizado', cls:'finalizado'};
+  var pr = getProgress();
+  return {label:'En curso - Dia '+pr.dayNum+' de '+pr.total, cls:'activo'};
+}
+
+function getCheckIn48() {
+  var ahora = new Date();
+  var en48 = new Date(ahora.getTime() + 48*3600000);
+  for(var i=0; i<vuelos.length; i++){
+    var v = vuelos[i];
+    if(v.fecha_salida){
+      var salida = new Date(v.fecha_salida);
+      if(salida > ahora && salida <= en48) return v;
+    }
+  }
+  return null;
+}
+
+// LOGIN
+function doLogin() {
+  var codigo = g('login-code').value.trim();
+  if(!codigo){ showLoginErr('Ingresa tu nombre o destino'); return; }
+  buscarViaje(codigo);
+}
+
+async function buscarViaje(busqueda) {
+  var btn = g('login-btn');
+  btn.textContent = 'Buscando...'; btn.disabled = true;
+  g('login-err').style.display = 'none';
+  try {
+    // Try by destino
+    var r1 = await sb.from('viajes')
+      .select('*,clientes(nombre,email,telefono)')
+      .ilike('destino','%'+busqueda+'%')
+      .order('fecha_inicio',{ascending:false})
+      .limit(1);
+    if(r1.data && r1.data.length > 0){
+      viaje = r1.data[0];
+      await cargarDatos();
+      mostrarApp();
+      btn.textContent='Ingresar a mi viaje'; btn.disabled=false;
+      return;
+    }
+    // Try by client name
+    var r2 = await sb.from('clientes')
+      .select('id')
+      .ilike('nombre','%'+busqueda+'%')
+      .limit(1);
+    if(r2.data && r2.data.length > 0){
+      var r3 = await sb.from('viajes')
+        .select('*,clientes(nombre,email,telefono)')
+        .eq('cliente_id',r2.data[0].id)
+        .order('fecha_inicio',{ascending:false})
+        .limit(1);
+      if(r3.data && r3.data.length > 0){
+        viaje = r3.data[0];
+        await cargarDatos();
+        mostrarApp();
+        btn.textContent='Ingresar a mi viaje'; btn.disabled=false;
+        return;
+      }
+    }
+    showLoginErr('No encontramos tu viaje. Consulta con tu agente.');
+  } catch(e) {
+    showLoginErr('Error de conexion. Intenta de nuevo.');
+  }
+  btn.textContent='Ingresar a mi viaje'; btn.disabled=false;
+}
+
+function showLoginErr(msg) {
+  var e = g('login-err');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+async function cargarDatos() {
+  var id = viaje.id;
+  var rs = await Promise.all([
+    sb.from('vuelos').select('*').eq('viaje_id',id).order('fecha_salida'),
+    sb.from('hoteles').select('*').eq('viaje_id',id).order('checkin'),
+    sb.from('actividades').select('*').eq('viaje_id',id).order('dia'),
+    sb.from('itinerario').select('*').eq('viaje_id',id).order('dia'),
+  ]);
+  vuelos = rs[0].data || [];
+  hoteles = rs[1].data || [];
+  actividades = rs[2].data || [];
+  itinerario = rs[3].data || [];
+  // Load local docs from localStorage
+  try {
+    var stored = localStorage.getItem('mis-docs-'+id);
+    misDocumentos = stored ? JSON.parse(stored) : [];
+  } catch(e) { misDocumentos = []; }
+}
+
+function mostrarApp() {
+  g('login-screen').style.display = 'none';
+  g('app-screen').style.display = 'flex';
+  renderInicio();
+  goTab('inicio');
+}
+
+// NAVEGACION
+function goTab(tab) {
+  ['inicio','itinerario','docs'].forEach(function(t){
+    var btn = g('tab-'+t);
+    var pg = g('page-'+t);
+    if(btn) btn.classList.toggle('on', t===tab);
+    if(pg) pg.style.display = t===tab ? 'block' : 'none';
+  });
+  if(tab==='inicio') renderInicio();
+  if(tab==='itinerario') renderItinerario();
+  if(tab==='docs') renderDocs();
+}
+
+// INICIO
+function renderInicio() {
+  if(!viaje) return;
+  var cn = viaje.clientes ? viaje.clientes.nombre.split(' ')[0] : 'Viajero';
+  var pr = getProgress();
+  var check48 = getCheckIn48();
+  var h = new Date().getHours();
+  var saludo = h<12?'Buenos dias':h<18?'Buenas tardes':'Buenas noches';
+  g('home-saludo').innerHTML = saludo+', <strong>'+cn+'</strong>';
+
+  // Banner
+  g('banner-dest').textContent = viaje.destino || '-';
+  g('banner-fechas').textContent = fdCorta(viaje.fecha_inicio)+' — '+fdCorta(viaje.fecha_fin);
+  var st = getStatusViaje();
+  g('banner-pill').textContent = st.label;
+  g('banner-pill').className = 'banner-pill pill-'+st.cls;
+
+  // Progreso
+  g('prog-bar').style.width = pr.pct+'%';
+  g('prog-label').textContent = 'Dia '+pr.dayNum+' de '+pr.total;
+  g('prog-pct').textContent = pr.pct+'%';
+  g('stat-vuelos').textContent = vuelos.length;
+  g('stat-hoteles').textContent = hoteles.length;
+  g('stat-acts').textContent = actividades.length;
+
+  // Check-in 48hs
+  var alertBox = g('checkin-alert');
+  if(check48 && check48.link_checkin){
+    alertBox.style.display = 'flex';
+    var salida = new Date(check48.fecha_salida);
+    var diff = Math.round((salida-new Date())/3600000);
+    g('checkin-texto').textContent = 'Vuelo '+(check48.nro_vuelo||'')+' en '+diff+' hs';
+    g('checkin-link').href = check48.link_checkin;
+  } else {
+    alertBox.style.display = 'none';
+  }
+
+  renderHoy(pr);
+}
+
+function renderHoy(pr) {
+  var hoy = pr.diaActual;
+  g('hoy-fecha').textContent = fdLarga(hoy);
+  var cont = g('hoy-cont');
+  cont.innerHTML = '';
+
+  // Buscar itinerario del dia actual por fecha
+  var hoyStr = hoy.toISOString().slice(0,10);
+  var inicio = stripTime(parseDate(viaje.fecha_inicio));
+  var diaNum = Math.round((hoy-inicio)/86400000)+1;
+  var diaItin = itinerario.find(function(d){ return d.dia===diaNum; });
+
+  if(diaItin && diaItin.titulo){
+    cont.appendChild(ce('div','hoy-titulo',diaItin.titulo));
+    if(diaItin.descripcion) cont.appendChild(ce('div','hoy-desc',diaItin.descripcion));
+  }
+
+  var actsHoy = actividades.filter(function(a){ return a.dia===diaNum; });
+  actsHoy.forEach(function(a){
+    cont.appendChild(mkHoyItem(getEmojiTipo(a.tipo), a.nombre, a.horario||'', getActColor(a.tipo)));
+  });
+
+  var hotelHoy = hoteles.find(function(h){
+    return h.checkin <= hoyStr && h.checkout > hoyStr;
+  });
+  if(hotelHoy){
+    cont.appendChild(mkHoyItem('hotel', hotelHoy.nombre+(hotelHoy.categoria?' '+starStr(hotelHoy.categoria):''), 'Hotel de esta noche', '#E8F5E9'));
+  }
+
+  if(!diaItin && actsHoy.length===0 && !hotelHoy){
+    cont.appendChild(ce('div','hoy-vacio','Dia libre. Disfruta!'));
+  }
+
+  var tipBox = g('tip-agente');
+  if(diaItin && diaItin.tip){
+    tipBox.style.display = 'block';
+    g('tip-texto').textContent = diaItin.tip;
+  } else {
+    tipBox.style.display = 'none';
+  }
+}
+
+function starStr(n) { var s=''; for(var i=0;i<parseInt(n||0);i++) s+='★'; return s; }
+
+function mkHoyItem(tipo, nombre, sub, color) {
+  var item = ce('div','hoy-item');
+  var ic = ce('div','hoy-ic');
+  ic.style.background = color||'#E8EAF6';
+  ic.textContent = getEmojiTipo(tipo);
+  var info = ce('div','hoy-info');
+  info.appendChild(ce('div','hoy-nm',nombre));
+  if(sub) info.appendChild(ce('div','hoy-sub',sub));
+  item.appendChild(ic);
+  item.appendChild(info);
+  return item;
+}
+
+function getEmojiTipo(tipo) {
+  var m={'Excursion':'🗺','Traslado':'🚌','Cena incluida':'🍽','Show':'🎭','Libre':'☀','vuelo':'✈','hotel':'🏨','check-in':'📋'};
+  return m[tipo]||'📌';
+}
+function getActColor(tipo) {
+  var m={'Excursion':'#E8EAF6','Traslado':'#FFF8E1','Cena incluida':'#FFE8E8','Show':'#F3E8FF','Libre':'#E8F5E9'};
+  return m[tipo]||'#E8EAF6';
+}
+
+// ITINERARIO - por fechas reales, todos los dias con "Libre" si no hay nada
+function renderItinerario() {
+  var cont = g('itin-cont');
+  cont.innerHTML = '';
+  if(!viaje){ cont.innerHTML='<div class="vacio"><p>Cargando...</p></div>'; return; }
+
+  var inicio = stripTime(parseDate(viaje.fecha_inicio));
+  var fin = stripTime(parseDate(viaje.fecha_fin));
+  var totalDias = Math.round((fin-inicio)/86400000)+1;
+  var hoy = stripTime(new Date());
+
+  for(var d=1; d<=totalDias; d++){
+    var fecha = new Date(inicio);
+    fecha.setDate(fecha.getDate()+(d-1));
+    var isPast = fecha < hoy;
+    var isToday = fecha.toDateString()===hoy.toDateString();
+    var fechaStr = fecha.toISOString().slice(0,10);
+
+    var dItin = itinerario.find(function(x){ return x.dia===d; });
+    var actsD = actividades.filter(function(a){ return a.dia===d; });
+    var hotelD = hoteles.find(function(h){ return h.checkin<=fechaStr && h.checkout>fechaStr; });
+
+    var card = ce('div','itin-card'+(isPast?' past':isToday?' today':''));
+
+    // Header con fecha real
+    var header = ce('div','itin-header');
+    var num = ce('div','itin-num'+(isPast?' past':isToday?' today-num':''));
+    num.textContent = fecha.getDate();
+    var hinfo = ce('div','itin-hinfo');
+    var titulo = (dItin&&dItin.titulo) ? dItin.titulo : 'Dia libre';
+    if(isToday) titulo += ' — HOY';
+    var htit = ce('div','itin-htit',titulo);
+    if(isToday) htit.style.color='var(--pd)';
+    var hfecha = ce('div','itin-fecha');
+    hfecha.textContent = fecha.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long'});
+    if(dItin&&dItin.ciudad) hfecha.textContent += ' · '+dItin.ciudad;
+    hinfo.appendChild(htit);
+    hinfo.appendChild(hfecha);
+    header.appendChild(num);
+    header.appendChild(hinfo);
+    card.appendChild(header);
+
+    // Descripcion
+    if(dItin&&dItin.descripcion){
+      card.appendChild(ce('div','itin-desc',dItin.descripcion));
+    }
+
+    // Actividades
+    if(actsD.length){
+      var actsDiv = ce('div','itin-acts');
+      actsD.forEach(function(a){
+        var act = ce('div','itin-act');
+        act.appendChild(ce('span','act-ic',getEmojiTipo(a.tipo)));
+        act.appendChild(ce('span','act-nm',(a.horario?a.horario+' — ':'')+a.nombre));
+        actsDiv.appendChild(act);
+      });
+      card.appendChild(actsDiv);
+    }
+
+    // Hotel
+    if(hotelD){
+      card.appendChild(ce('div','itin-hotel','🏨 '+hotelD.nombre+(hotelD.categoria?' '+starStr(hotelD.categoria):'')));
+    }
+
+    // Vuelos del dia
+    var vuelosD = vuelos.filter(function(v){
+      if(!v.fecha_salida) return false;
+      return new Date(v.fecha_salida).toISOString().slice(0,10)===fechaStr;
+    });
+    vuelosD.forEach(function(v){
+      card.appendChild(ce('div','itin-hotel','✈ '+(v.origen||'?')+' → '+(v.destino||'?')+(v.nro_vuelo?' · '+v.nro_vuelo:'')));
+    });
+
+    // Tip
+    if(dItin&&dItin.tip){
+      var tip = ce('div','itin-tip');
+      tip.appendChild(ce('span','tip-ic','💡'));
+      tip.appendChild(ce('span','',dItin.tip));
+      card.appendChild(tip);
+    }
+
+    cont.appendChild(card);
+  }
+}
+
+// DOCUMENTOS
+function renderDocs() {
+  var cont = g('docs-cont');
+  cont.innerHTML = '';
+
+  // Vuelos
+  if(vuelos.length){
+    cont.appendChild(ce('div','docs-section-title','✈ Vuelos'));
+    vuelos.forEach(function(v){
+      var card = ce('div','doc-card');
+      card.appendChild(ce('div','doc-card-title',(v.origen||'?')+' → '+(v.destino||'?')));
+      var info = ce('div','doc-card-info');
+      if(v.aerolinea) info.appendChild(ce('div','doc-card-item',v.aerolinea+(v.nro_vuelo?' · '+v.nro_vuelo:'')));
+      if(v.fecha_salida) info.appendChild(ce('div','doc-card-item','Salida: '+new Date(v.fecha_salida).toLocaleString('es-AR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})));
+      if(v.asiento) info.appendChild(ce('div','doc-card-item','Asiento: '+v.asiento));
+      if(v.codigo_reserva) info.appendChild(ce('div','doc-card-item','Reserva: '+v.codigo_reserva));
+      card.appendChild(info);
+      if(v.link_checkin){
+        var a = ce('a','doc-link','Hacer check-in →');
+        a.href=v.link_checkin; a.target='_blank';
+        card.appendChild(a);
+      }
+      cont.appendChild(card);
+    });
+  }
+
+  // Hoteles
+  if(hoteles.length){
+    cont.appendChild(ce('div','docs-section-title','🏨 Hoteles'));
+    hoteles.forEach(function(h){
+      var card = ce('div','doc-card');
+      card.appendChild(ce('div','doc-card-title',h.nombre));
+      var info = ce('div','doc-card-info');
+      if(h.ciudad) info.appendChild(ce('div','doc-card-item',h.ciudad));
+      if(h.checkin) info.appendChild(ce('div','doc-card-item','Check-in: '+fd(h.checkin)+' · Check-out: '+fd(h.checkout)));
+      if(h.nro_reserva) info.appendChild(ce('div','doc-card-item','Reserva: '+h.nro_reserva));
+      if(h.desayuno==='Incluido') info.appendChild(ce('div','doc-card-item','✓ Desayuno incluido'));
+      card.appendChild(info);
+      cont.appendChild(card);
+    });
+  }
+
+  // Actividades
+  if(actividades.length){
+    cont.appendChild(ce('div','docs-section-title','📌 Actividades incluidas'));
+    actividades.forEach(function(a){
+      var card = ce('div','doc-card');
+      card.appendChild(ce('div','doc-card-title',getEmojiTipo(a.tipo)+' '+a.nombre));
+      var info = ce('div','doc-card-info');
+      if(a.dia) info.appendChild(ce('div','doc-card-item','Dia '+a.dia+(a.horario?' · '+a.horario:'')));
+      if(a.ciudad) info.appendChild(ce('div','doc-card-item',a.ciudad));
+      if(a.descripcion) info.appendChild(ce('div','doc-card-item',a.descripcion));
+      card.appendChild(info);
+      cont.appendChild(card);
+    });
+  }
+
+  // Mis documentos
+  var myDocsDiv = ce('div','');
+  myDocsDiv.appendChild(ce('div','docs-section-title','📁 Mis documentos'));
+  var myDocsCont = ce('div','');
+  myDocsCont.id = 'my-docs-list';
+  renderMisDocs(myDocsCont);
+  myDocsDiv.appendChild(myDocsCont);
+
+  // Boton subir
+  var addBtn = ce('div','add-doc-btn');
+  addBtn.innerHTML = '<span>+</span> Agregar documento';
+  addBtn.addEventListener('click',function(){
+    g('doc-file-input').click();
+  });
+  myDocsDiv.appendChild(addBtn);
+
+  var fileInput = document.createElement('input');
+  fileInput.type='file'; fileInput.id='doc-file-input';
+  fileInput.accept='.pdf,.jpg,.jpeg,.png,.doc,.docx';
+  fileInput.style.display='none';
+  fileInput.addEventListener('change',function(){
+    if(!fileInput.files.length) return;
+    var f = fileInput.files[0];
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var doc = {
+        nombre: f.name,
+        tipo: f.type,
+        tamano: f.size,
+        data: ev.target.result,
+        fecha: new Date().toLocaleDateString('es-AR')
+      };
+      misDocumentos.push(doc);
+      try{ localStorage.setItem('mis-docs-'+viaje.id, JSON.stringify(misDocumentos)); }catch(e){}
+      renderMisDocs(myDocsCont);
+    };
+    reader.readAsDataURL(f);
+    fileInput.value='';
+  });
+  myDocsDiv.appendChild(fileInput);
+  cont.appendChild(myDocsDiv);
+}
+
+function renderMisDocs(cont) {
+  cont.innerHTML = '';
+  if(!misDocumentos.length){
+    cont.appendChild(ce('div','vacio-mini','Aun no subiste documentos.'));
+    return;
+  }
+  misDocumentos.forEach(function(doc,i){
+    var row = ce('div','my-doc-row');
+    var ic = ce('div','my-doc-ic', doc.tipo&&doc.tipo.includes('pdf')?'📄':'🖼');
+    var info = ce('div','my-doc-info');
+    info.appendChild(ce('div','my-doc-nm',doc.nombre));
+    info.appendChild(ce('div','my-doc-fecha',doc.fecha));
+    var actions = ce('div','my-doc-actions');
+    // Ver
+    var verBtn = ce('a','my-doc-btn','Ver');
+    verBtn.href = doc.data;
+    verBtn.target = '_blank';
+    actions.appendChild(verBtn);
+    // Eliminar
+    var delBtn = ce('button','my-doc-del','✕');
+    (function(idx){ delBtn.addEventListener('click',function(){
+      misDocumentos.splice(idx,1);
+      try{ localStorage.setItem('mis-docs-'+viaje.id, JSON.stringify(misDocumentos)); }catch(e){}
+      renderMisDocs(cont);
+    });})(i);
+    actions.appendChild(delBtn);
+    row.appendChild(ic);
+    row.appendChild(info);
+    row.appendChild(actions);
+    cont.appendChild(row);
+  });
+}
+
+function setupEvents(){
+  g('login-btn').addEventListener('click',doLogin);
+  g('login-code').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  g('tab-inicio').addEventListener('click',function(){goTab('inicio');});
+  g('tab-itinerario').addEventListener('click',function(){goTab('itinerario');});
+  g('tab-docs').addEventListener('click',function(){goTab('docs');});
+}
+
+document.addEventListener('DOMContentLoaded',setupEvents);
+
+</script>
+</body>
+</html>
